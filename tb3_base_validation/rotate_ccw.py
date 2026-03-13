@@ -1,3 +1,10 @@
+"""
+rotate_ccw.py
+
+Rotate the robot 90 degrees counter-clockwise using odometry yaw.
+"""
+
+import time
 import math
 
 import rclpy
@@ -5,12 +12,13 @@ from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 
-
+# Test settings
 TARGET_ANGLE_DEG = 90.0
 ANGULAR_SPEED = 0.5
 
 
 def normalize_angle(angle):
+    # Keep angle in [-pi, pi] to avoid wraparound issues
     while angle > math.pi:
         angle -= 2.0 * math.pi
     while angle < -math.pi:
@@ -18,61 +26,83 @@ def normalize_angle(angle):
     return angle
 
 
-class RotateAngle(Node):
+class RotateCCW(Node):
     def __init__(self):
-        super().__init__('rotate_angle')
+        super().__init__('rotate_ccw')
 
-        self.cmd_pub = self.create_publisher(TwistStamped, '/cmd_vel', 10)
-        self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        # Publisher for robot velocity commands
+        self.pub = self.create_publisher(TwistStamped, '/cmd_vel', 10)
 
+        # Subscriber for odometry feedback
+        self.sub = self.create_subscription(Odometry, '/odom', self.odom_cb, 10)
+
+        # Start and current yaw tracking
         self.start_yaw = None
         self.current_yaw = None
-        self.finished = False
 
-        self.target_angle_rad = math.radians(TARGET_ANGLE_DEG)
-        self.timer = self.create_timer(0.1, self.control_loop)
+        # Shutdown control
+        self.done = False
+        self.finish_time = None
 
-    def odom_callback(self, msg: Odometry):
+        # Run the control loop at 10 Hz
+        self.timer = self.create_timer(0.1, self.loop)
+
+    def odom_cb(self, msg):
+        # Convert quaternion orientation into yaw
         q = msg.pose.pose.orientation
         yaw = math.atan2(
             2.0 * (q.w * q.z + q.x * q.y),
             1.0 - 2.0 * (q.y * q.y + q.z * q.z)
         )
 
+        # Save first yaw reading as the rotation start point
         if self.start_yaw is None:
             self.start_yaw = yaw
-            self.get_logger().info('Captured starting yaw')
 
         self.current_yaw = yaw
 
-    def publish_cmd(self, linear_x: float = 0.0, angular_z: float = 0.0):
+    def publish(self, x=0.0, z=0.0):
+        # Publish a TwistStamped command
         msg = TwistStamped()
-        msg.twist.linear.x = linear_x
-        msg.twist.angular.z = angular_z
-        self.cmd_pub.publish(msg)
+        msg.twist.linear.x = x
+        msg.twist.angular.z = z
+        self.pub.publish(msg)
 
-    def control_loop(self):
+    def stop_and_exit(self, message):
+        # Stop the robot and mark node ready for shutdown
+        self.publish()
+        self.get_logger().info(message)
+        self.done = True
+        self.finish_time = time.time()
+
+    def loop(self):
+        # After finishing, wait briefly, then exit cleanly
+        if self.done:
+            if time.time() - self.finish_time > 0.5:
+                self.get_logger().info('Exiting rotate_ccw')
+                rclpy.shutdown()
+            return
+
+        # Wait until yaw has been initialized
         if self.start_yaw is None or self.current_yaw is None:
             return
 
+        # Compute yaw change from start
         delta = normalize_angle(self.current_yaw - self.start_yaw)
+        delta_deg = math.degrees(delta)
 
-        if abs(delta) < self.target_angle_rad:
-            self.publish_cmd(angular_z=ANGULAR_SPEED)
-        elif not self.finished:
-            self.publish_cmd(0.0, 0.0)
-            self.get_logger().info(
-                f'Rotation complete. Rotated: {math.degrees(delta):.1f} deg'
-            )
-            self.finished = True
+        # Rotate until the target angle is reached
+        if abs(delta_deg) < TARGET_ANGLE_DEG:
+            self.publish(z=ANGULAR_SPEED)
+        else:
+            self.stop_and_exit(f'Rotation complete. Rotated: {delta_deg:.1f} deg')
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = RotateAngle()
+    node = RotateCCW()
     rclpy.spin(node)
     node.destroy_node()
-    rclpy.shutdown()
 
 
 if __name__ == '__main__':
