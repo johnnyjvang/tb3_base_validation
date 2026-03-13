@@ -56,7 +56,7 @@ Clone into a ROS 2 workspace:
 
 ```bash
 cd ~/your_ros2_ws/src
-git clone https://github.com/<your-username>/tb3_base_validation.git
+git clone https://github.com/johnnyjvang/tb3_base_validation.git
 ```
 
 Build the workspace:
