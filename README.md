@@ -19,6 +19,20 @@ This package contains six base validation tests:
 | `rotate_ccw` | Rotate counter-clockwise until ~90° |
 | `rotate_cw` | Rotate clockwise until ~90° |
 
+---
+
+## Demo
+
+Example run of the base validation tests in Gazebo:
+
+<p align="center">
+  <img src="docs/output.png" width="600">
+</p>
+
+<p align="center">
+  <img src="docs/base_validation_demo.gif" width="700">
+</p>
+
 All tests operate directly on:
 
 ```
@@ -175,6 +189,18 @@ Rotation complete: 90° ± ~3°
 | Drift while moving straight | Mechanical imbalance |
 | Rotation inaccurate | Angular odometry tuning |
 
+
++---------------+--------+-------------+-------------------+
+| Test          | Status | Measurement | Notes             |
++---------------+--------+-------------+-------------------+
+| timed_forward | PASS   | 0.289 m     | completed         |
+| timed_back    | PASS   | 0.294 m     | completed         |
+| odom_forward  | PASS   | 0.310 m     | target reached    |
+| odom_back     | PASS   | 0.305 m     | target reached    |
+| rotate_ccw    | PASS   | 90.3 deg    | rotation complete |
+| rotate_cw     | PASS   | -90.0 deg   | rotation complete |
++---------------+--------+-------------+-------------------+
+
 ---
 
 ## Package Structure
@@ -191,7 +217,10 @@ tb3_base_validation/
 │   ├── odom_forward.py
 │   ├── odom_back.py
 │   ├── rotate_ccw.py
-│   └── rotate_cw.py
+│   ├── rotate_cw.py
+│   ├── reset_results.py
+│   ├── summary_report.py
+│   └── result_utils.py
 ├── package.xml
 ├── setup.py
 └── setup.cfg

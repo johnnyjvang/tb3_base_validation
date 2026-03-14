@@ -13,6 +13,9 @@ from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 
+# ADD THIS IMPORT
+from tb3_base_validation.result_utils import append_result
+
 # Test settings
 TARGET_DISTANCE = 0.3048
 SPEED = 0.10
@@ -62,9 +65,18 @@ class OdomForward(Node):
         msg.twist.angular.z = z
         self.pub.publish(msg)
 
-    def stop_and_exit(self, message):
+    def stop_and_exit(self, message, dist):
         # Stop the robot and mark node ready for shutdown
         self.publish()
+
+        # WRITE RESULT TO JSON/CSV
+        append_result(
+            test_name='odom_forward',
+            status='PASS',
+            measurement=f'{dist:.3f} m',
+            notes='target reached'
+        )
+
         self.get_logger().info(message)
         self.done = True
         self.finish_time = time.time()
@@ -91,7 +103,10 @@ class OdomForward(Node):
         if dist < TARGET_DISTANCE:
             self.publish(x=SPEED)
         else:
-            self.stop_and_exit(f'Target reached. Distance traveled: {dist:.3f} m')
+            self.stop_and_exit(
+                f'Target reached. Distance traveled: {dist:.3f} m',
+                dist
+            )
 
 
 def main(args=None):

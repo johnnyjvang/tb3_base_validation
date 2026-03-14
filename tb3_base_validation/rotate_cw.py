@@ -12,6 +12,9 @@ from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 
+# ADD THIS IMPORT
+from tb3_base_validation.result_utils import append_result
+
 # Test settings
 TARGET_ANGLE_DEG = 90.0
 ANGULAR_SPEED = -0.5
@@ -68,9 +71,18 @@ class RotateCW(Node):
         msg.twist.angular.z = z
         self.pub.publish(msg)
 
-    def stop_and_exit(self, message):
+    def stop_and_exit(self, message, delta_deg):
         # Stop the robot and mark node ready for shutdown
         self.publish()
+
+        # WRITE RESULT TO JSON/CSV
+        append_result(
+            test_name='rotate_cw',
+            status='PASS',
+            measurement=f'{delta_deg:.1f} deg',
+            notes='rotation complete'
+        )
+
         self.get_logger().info(message)
         self.done = True
         self.finish_time = time.time()
@@ -95,7 +107,10 @@ class RotateCW(Node):
         if abs(delta_deg) < TARGET_ANGLE_DEG:
             self.publish(z=ANGULAR_SPEED)
         else:
-            self.stop_and_exit(f'Rotation complete. Rotated: {delta_deg:.1f} deg')
+            self.stop_and_exit(
+                f'Rotation complete. Rotated: {delta_deg:.1f} deg',
+                delta_deg
+            )
 
 
 def main(args=None):

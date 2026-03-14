@@ -1,7 +1,8 @@
 """
 base_validation_all.launch.py
 
-Runs TurtleBot3 base validation tests sequentially.
+Runs TurtleBot3 base validation tests sequentially
+and prints a summary report at the end.
 """
 
 # Core ROS2 launch description container
@@ -18,6 +19,9 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+
+    # Reset results file before starting tests
+    reset_results = Node(package='tb3_base_validation', executable='reset_results', output='screen')
 
     # Test 1: timed forward motion
     timed_forward = Node(package='tb3_base_validation', executable='timed_forward', output='screen')
@@ -37,10 +41,19 @@ def generate_launch_description():
     # Test 6: rotate 90° clockwise
     rotate_cw = Node(package='tb3_base_validation', executable='rotate_cw', output='screen')
 
+    # Final summary report
+    summary_report = Node(package='tb3_base_validation', executable='summary_report', output='screen')
+
     return LaunchDescription([
 
-        # Start first test immediately
-        timed_forward,
+        # Start by resetting results file
+        reset_results,
+
+        # When reset_results exits, start timed_forward
+        RegisterEventHandler(
+            OnProcessExit(target_action=reset_results,
+                on_exit=[TimerAction(period=1.0, actions=[timed_forward])])
+        ),
 
         # When timed_forward exits, start timed_back
         RegisterEventHandler(
@@ -70,6 +83,12 @@ def generate_launch_description():
         RegisterEventHandler(
             OnProcessExit(target_action=rotate_ccw,
                 on_exit=[TimerAction(period=1.0, actions=[rotate_cw])])
+        ),
+
+        # When rotate_cw exits, start summary_report
+        RegisterEventHandler(
+            OnProcessExit(target_action=rotate_cw,
+                on_exit=[TimerAction(period=1.0, actions=[summary_report])])
         ),
 
     ])

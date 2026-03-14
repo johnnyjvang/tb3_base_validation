@@ -36,6 +36,9 @@ setup(
 
             'rotate_ccw = tb3_base_validation.rotate_ccw:main',
             'rotate_cw = tb3_base_validation.rotate_cw:main',
+            # Added to print and reset json output
+            'reset_results = tb3_base_validation.reset_results:main',
+            'summary_report = tb3_base_validation.summary_report:main',
         ],
     },
 )
