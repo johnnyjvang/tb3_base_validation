@@ -30,7 +30,7 @@ Example run of the base validation tests in Gazebo:
 </p>
 
 <p align="center">
-  <img src="docs/base_validation_demo.gif" width="700">
+  <img src="docs/demo.gif" width="700">
 </p>
 
 All tests operate directly on:
