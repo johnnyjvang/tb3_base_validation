@@ -190,16 +190,17 @@ Rotation complete: 90° ± ~3°
 | Rotation inaccurate | Angular odometry tuning |
 
 
-+---------------+--------+-------------+-------------------+
+## Expected Output
+
 | Test          | Status | Measurement | Notes             |
-+---------------+--------+-------------+-------------------+
+|---------------|--------|-------------|-------------------|
 | timed_forward | PASS   | 0.289 m     | completed         |
 | timed_back    | PASS   | 0.294 m     | completed         |
 | odom_forward  | PASS   | 0.310 m     | target reached    |
 | odom_back     | PASS   | 0.305 m     | target reached    |
 | rotate_ccw    | PASS   | 90.3 deg    | rotation complete |
 | rotate_cw     | PASS   | -90.0 deg   | rotation complete |
-+---------------+--------+-------------+-------------------+
+
 
 ---
 
